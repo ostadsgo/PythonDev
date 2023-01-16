@@ -1,3 +1,4 @@
+from random import choices
 import tkinter as tk
 from tkinter import ttk
 
@@ -7,47 +8,65 @@ class MainFrame(ttk.Frame):
         super().__init__(master, **kwargs)
         self.master = master
         #  random generated password
+        self.password_len = tk.IntVar()
         self.password = tk.StringVar()
-        self.password_frame = ttk.Frame(self, relief=tk.SOLID, padding=(5, 10))
-        self.password_frame.pack(expand=True, fill=tk.BOTH, pady=(0, 10))
+        self.upper = tk.BooleanVar()
+        self.lower = tk.BooleanVar()
+        self.number = tk.BooleanVar()
+        self.symbol = tk.BooleanVar()
+        self.lowers = "".join(chr(i) for i in range(97, 123))
+        self.uppers = "".join(ch.upper() for ch in self.lowers)
+        self.numbers = "".join(chr(i) for i in range(48, 58))
+        self.symbols = "@!#$%&^()*+"
 
-        self.password_entry = ttk.Entry(
-            self.password_frame, width=50, textvariable=self.password
+        password_frame = ttk.Frame(self, relief=tk.SOLID, padding=(5, 10))
+        password_frame.pack(expand=True, fill=tk.BOTH, pady=(0, 10))
+
+        password_entry = ttk.Entry(password_frame, width=50, textvariable=self.password)
+        copy_button = ttk.Button(
+            password_frame, text="Copy", command=self.copy_password
         )
-        self.copy_button = ttk.Button(
-            self.password_frame, text="Copy", command=self.copy_password
-        )
-        self.password_entry.pack(expand=True, fill=tk.BOTH, side=tk.LEFT)
-        self.copy_button.pack(expand=True, fill=tk.BOTH, padx=(10, 0))
+        password_entry.pack(expand=True, fill=tk.BOTH, side=tk.LEFT)
+        copy_button.pack(expand=True, fill=tk.BOTH, padx=(10, 0))
 
         # Settings for password
-        self.setting_frame = ttk.Frame(self, relief=tk.SOLID, padding=(5, 10))
-        self.setting_frame.pack(expand=True, fill=tk.BOTH)
+        setting_frame = ttk.Frame(self, relief=tk.SOLID, padding=(5, 10))
+        setting_frame.pack(expand=True, fill=tk.BOTH)
 
         # settings
-        self.uppercase_checkbutton = ttk.Checkbutton(
-            self.setting_frame, text="Uppercase"
+        uppercase_checkbutton = ttk.Checkbutton(
+            setting_frame, variable=self.upper, text="Uppercase"
         )
-        self.lowercase_checkbutton = ttk.Checkbutton(
-            self.setting_frame, text="Lowercase"
+        lowercase_checkbutton = ttk.Checkbutton(
+            setting_frame, variable=self.lower, text="Lowercase"
         )
-        self.symbol_checkbutton = ttk.Checkbutton(self.setting_frame, text="Symbols")
-        self.number_checkbutton = ttk.Checkbutton(self.setting_frame, text="Numbers")
-        self.uppercase_checkbutton.pack(expand=True, fill=tk.BOTH)
-        self.lowercase_checkbutton.pack(expand=True, fill=tk.BOTH)
-        self.symbol_checkbutton.pack(expand=True, fill=tk.BOTH)
-        self.number_checkbutton.pack(expand=True, fill=tk.BOTH)
-
-        self.generate_password_button = ttk.Button(
+        number_checkbutton = ttk.Checkbutton(
+            setting_frame, variable=self.number, text="Numbers"
+        )
+        symbol_checkbutton = ttk.Checkbutton(
+            setting_frame, variable=self.symbol, text="Symbols"
+        )
+        passwrod_len_label = ttk.Label(setting_frame, text="Password Length")
+        password_len_entry = ttk.Entry(setting_frame, textvariable=self.password_len)
+        generate_password_button = ttk.Button(
             self, text="Generate Password", command=self.generate_password
         )
-        self.generate_password_button.pack(expand=True, fill=tk.BOTH)
+        self.password_len.set(12)
+        uppercase_checkbutton.pack(expand=True, fill=tk.BOTH)
+        lowercase_checkbutton.pack(expand=True, fill=tk.BOTH)
+        symbol_checkbutton.pack(expand=True, fill=tk.BOTH)
+        number_checkbutton.pack(expand=True, fill=tk.BOTH)
+        passwrod_len_label.pack(expand=True, fill=tk.BOTH)
+        password_len_entry.pack(expand=True, fill=tk.BOTH)
+        generate_password_button.pack(expand=True, fill=tk.BOTH)
 
     def copy_password(self):
         print("copy password to clipboard")
 
     def generate_password(self):
-        print("Generate password.")
+        n = self.password_len.get()
+        if self.upper.get():
+            self.password.set("".join(choices(self.uppers, k=n)))
 
 
 class App(tk.Tk):
