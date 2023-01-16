@@ -1,4 +1,4 @@
-from random import choices
+from random import choices, sample, shuffle
 import tkinter as tk
 from tkinter import ttk
 
@@ -77,14 +77,18 @@ class MainFrame(ttk.Frame):
         return n
 
     def generate_password(self):
-        n = self.password_len.get()
-        # find out checkboxes that checked!
+        password = []
         n = self.password_len.get() // self.checked_number()
-
         if self.upper.get():
-            self.password.set("".join(choices(self.uppers, k=n)))
+            password.extend("".join(choices(self.uppers, k=n)))
         if self.lower.get():
-            self.password.set("".join(choices(self.lower, k=n)))
+            password.extend("".join(choices(self.lowers, k=n)))
+        if self.number.get():
+            password.extend("".join(choices(self.numbers, k=n)))
+        if self.symbol.get():
+            password.extend("".join(choices(self.symbols, k=n)))
+        shuffle(password)
+        self.password.set("".join(password))
 
 
 class App(tk.Tk):
