@@ -18,6 +18,7 @@ class MainFrame(ttk.Frame):
         self.uppers = "".join(ch.upper() for ch in self.lowers)
         self.numbers = "".join(chr(i) for i in range(48, 58))
         self.symbols = "@!#$%&^()*+"
+        self.allchars = self.uppers + self.lowers + self.numbers + self.symbols
 
         password_frame = ttk.Frame(self, relief=tk.SOLID, padding=(5, 10))
         password_frame.pack(expand=True, fill=tk.BOTH, pady=(0, 10))
@@ -78,7 +79,7 @@ class MainFrame(ttk.Frame):
 
     def generate_password(self):
         password = []
-        n = self.password_len.get() // self.checked_number()
+        n, r = divmod(self.password_len.get(), self.checked_number())
         if self.upper.get():
             password.extend("".join(choices(self.uppers, k=n)))
         if self.lower.get():
@@ -88,6 +89,8 @@ class MainFrame(ttk.Frame):
         if self.symbol.get():
             password.extend("".join(choices(self.symbols, k=n)))
         shuffle(password)
+        rem_password = choices(self.allchars, k=r)
+        password.extend(rem_password)
         self.password.set("".join(password))
 
 
