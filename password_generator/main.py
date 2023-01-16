@@ -63,8 +63,24 @@ class MainFrame(ttk.Frame):
     def copy_password(self):
         print("copy password to clipboard")
 
+    def checked_number(self):
+        """Return number of check boxses checked."""
+        n = 0
+        if self.upper.get():
+            n += 1
+        if self.lower.get():
+            n += 1
+        if self.number.get():
+            n += 1
+        if self.symbol.get():
+            n += 1
+        return n
+
     def generate_password(self):
         n = self.password_len.get()
+        # find out checkboxes that checked!
+        n = self.password_len.get() // self.checked_number()
+
         if self.upper.get():
             self.password.set("".join(choices(self.uppers, k=n)))
 
