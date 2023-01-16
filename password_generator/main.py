@@ -83,6 +83,8 @@ class MainFrame(ttk.Frame):
 
         if self.upper.get():
             self.password.set("".join(choices(self.uppers, k=n)))
+        if self.lower.get():
+            self.password.set("".join(choices(self.lower, k=n)))
 
 
 class App(tk.Tk):
