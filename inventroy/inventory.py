@@ -23,6 +23,7 @@ class Menu(Enum):
     CLEAR = "clear"
     SORT_ASC = "sort asc"
     SORT_DEC = "sort dec"
+    EXIT = "exit"
 
 
 @dataclass
@@ -200,12 +201,12 @@ class Product:
         Returns
         -------
         outs: str
-            Return the product if found otherwise return `Not found`
+            Return the product if found otherwise return empty sting
         """
         products: list[str] = self.productfile.read()
         index = self.is_exist()
         if index == -1:
-            return "Not found"
+            return ""
         return products[index]
 
     @classmethod
@@ -259,7 +260,7 @@ class Product:
         Features:
         - User authorization.
         - Opetions like add, remove, search and show products.
-        Press `q` or `exit` to exit out of the program.
+        Press `exit` to exit out of the program.
         """
 
 
@@ -364,13 +365,55 @@ class Ui:
             number = int(input("Enter number of the products: "))
             price = int(input("Enter price of the product: "))
             product = Product(name, number, price)
-            return product
+            if product.add():
+                print("Product add successfuly.")
+            else:
+                print("Problem!!Product didn't add to the file")
         except ValueError:
             print("Error, please enter a valid number.")
             logging.error("wrong value for product number.")
         except Exception as e:
             print(e)
             logging.info(str(e))
+
+    @staticmethod
+    def remove_ui():
+        """Get input from user to delete a product."""
+        name = input("Product name: ").lower()
+        product = Product(name=name)
+        if product.remove():
+            print(f"{product} deleted successfully.")
+
+    @staticmethod
+    def search_ui():
+        """Input product name to search throughout products."""
+        name = input("Product name: ").lower()
+        product = Product(name=name)
+        result = product.search()
+        if result:
+            print(result)
+        print("Product not found!!")
+
+    @staticmethod
+    def show_ui():
+        Product.show()
+
+    @staticmethod
+    def help_ui():
+        Product.manual()
+
+    @staticmethod
+    def sort_asc_ui():
+        Product.sort_asc()
+
+    @staticmethod
+    def sort_dec_ui():
+        Product.sort_dec()
+
+    @staticmethod
+    def exit_ui():
+        print("Goodbye.")
+        exit()
 
     @classmethod
     def menu(cls):
@@ -381,34 +424,26 @@ class Ui:
             print(cls.show_menu())
             response = input("> ")
 
-            if response in ["q", "exit", "quit"]:
-                print("Goodbye")
-                exit()
+            if response in Menu.EXIT.value:
+                Ui.exit_ui()
             elif response == Menu.ADD.value:
-                product = Ui.add_ui()
-                product.add()
+                Ui.add_ui()
             elif response == Menu.SHOW.value:
-                Product.show()
+                Ui.show_ui()
             elif response == Menu.HELP.value:
-                print(Product.manual())
+                Ui.help_ui()
             elif response == Menu.REMOVE.value:
-                name = input("Enter product name to remove:").lower()
-                product = Product(name=name)
-                product.remove()
+                Ui.remove_ui()
             elif response == Menu.SEARCH.value:
-                name = input("Enter product name to search:").lower()
-                product = Product(name=name)
-                res = product.search()
-                print(res)
+                Ui.search_ui()
             elif response == Menu.CLEAR.value:
                 Ui.clear_screen()
             elif response == Menu.SORT_ASC.value:
-                Product.sort_asc()
+                Ui.sort_asc_ui()
             elif response == Menu.SORT_DEC.value:
-                Product.sort_dec()
+                Ui.sort_dec_ui()
             else:
                 print("Wrong choice!!")
-                logging.debug("user chooses wrong option", response)
 
             input("\nPress Enter key to continue ....")
 
