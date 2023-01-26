@@ -1,5 +1,0 @@
-iphone,2,1200,2400
-Xiomi,4,300,1200
-Air pod,5,18,90
-jkgjhgjhg,1,10,10
-microphone,3,25,75

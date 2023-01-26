@@ -3,6 +3,7 @@ import tomllib
 import logging
 from enum import Enum
 from dataclasses import dataclass
+from typing import Tuple
 
 
 # basic config for log file.
@@ -96,7 +97,8 @@ class ProductFile:
                 content: list[str] = file.read().strip().split("\n")
                 return content
         except FileNotFoundError:
-            print("The file inventory.txt is not exit")
+            logging.error("The file inventory.txt is not exit")
+            logging.error("Create inventory.txt for the first time.")
             self.write([""])
 
 
@@ -108,16 +110,14 @@ class Product:
     Name of the product to create a product is required.
     """
 
-    # Default filename to store all products.
-    FILENAME = "inventory.txt"
-
     def __init__(self, name: str, number=0, price=0):
         self.name = name
         self.number = number
         self.price = price
         self.total_price = self.number * self.price
+        self.productfile = ProductFile("inventory.txt")
 
-    def get_total_price(self) -> int:
+    def calc_total_price(self) -> int:
         """
         Calculate total price of the product
 
@@ -139,212 +139,196 @@ class Product:
             Return True if product save successfully otherwise False.
 
         """
-        try:
-            with open(self.FILENAME, "a") as file:
-                row = (
-                    f"{self.name},{self.number},{self.price},{self.get_total_price()}\n"
-                )
-                file.write(row)
-                return True
-        except FileExistsError as e:
-            logging.error(str(e))
-        except Exception as e:
-            logging.error(str(e))
+        line = f"{self.name},{self.number},{self.price},{self.calc_total_price()}\n"
+        if self.productfile.append(line):
+            return True
         return False
 
-    @staticmethod
-    def write_products(products: list[str]):
+    def is_exist(self) -> int:
         """
-
-        Parameters
-        ----------
-        products: list[str] :
-
+        Check if product is already exist in the file or not
 
         Returns
         -------
-
+        outs: int
+            Retrun the index of the product if found otherwise -1
         """
-        with open(Product.FILENAME, "w") as file:
-            for product in products:
-                file.write(product + "\n")
+        products: list[str] = self.productfile.read()
+        for index, product in enumerate(products):
+            name, *_ = product.split(",")
+            if name == self.name:
+                return index
+        return -1
 
-    @staticmethod
-    def read_products() -> str:
-        """ """
-        try:
-            with open(Product.FILENAME, "r") as file:
-                content: list[str] = file.read().strip().split("\n")
-                return content
-        except FileNotFoundError:
-            print("The file inventory.txt is not exit")
-            # if inventory.txt is not exist, the codes blow are going to create one.
-            with open(Product.FILENAME, "w") as file:
-                file.write("")
-            return ""
-
-    def is_product_exist(self) -> bool:
-        """ """
-        products: list[str] = Product.read_products()
-        for product in products:
-            p_name, *rest = product.split(",")
-            if p_name == self.name:
-                return True
-        return False
-
-    def add_product(self):
-        """ """
-        if self.is_product_exist():
-            print("Product is already exists.")
-            return None
-
-        self.save()
-
-    @staticmethod
-    def show(products: list[str]):
+    def add(self) -> bool:
         """
-
-        Parameters
-        ----------
-        products: list[str] :
-
+        Check if product is not in the file add it.
 
         Returns
         -------
-
+        out: bool
+            Return True if file saved otherwise return False
         """
-        print(f"{'Product Name':20}{'Quantity':10}Price\tTotal Price")
-        print("-" * 50)
-        item_numbers = 0
-        for product in products:
-            name, number, price, total_price = product.split(",")
-            print(f"{name:20}{number:10}${price}\t${total_price}")
-            item_numbers += int(number)
-        print(f"All items number are: {item_numbers}")
+        if self.is_exist() >= 0:
+            return False
+        return True if self.save() else False
 
-    @staticmethod
-    def show_products():
-        """ """
-        products: list[str] = Product.read_products()
-        Product.show(products)
+    def remove(self):
+        """
+        Remove a product if exist.
 
-    def search_product(self):
-        """ """
-        products: list[str] = Product.read_products()
-        for product in products:
-            name, *rest = product.split(",")
-            if name == self.name:
-                print(product)
-                break
-        else:
-            print(f"{self.name} not found")
+        Returns
+        -------
+        out: bool
+            True if remove operation was successful otherwise False.
+        """
+        products: list[str] = self.productfile.read()
+        index = self.is_exist()
+        if index == -1:
+            return False
+        del products[index]
+        self.productfile.write(products)
+        return True
 
-    def remove_product(self):
-        """ """
-        products: list[str] = Product.read_products()
-        for product in products.copy():
-            name, *rest = product.split(",")
-            if name == self.name:
-                products.remove(product)
-                print(f"{self.name} delete successfully.")
-                break
-        else:
-            print("item that you are trying to remove is not in the list")
+    def search(self) -> str:
+        """
+        Search product by name.
 
-        Product.write_products(products)
+        Returns
+        -------
+        outs: str
+            Return the product if found otherwise return empty seting
+        """
+        if self.is_exist() != -1:
+            return f"{self.name} {self.number} {self.price} {self.total_price}"
+        return ""
 
-    @staticmethod
-    def show_help():
-        """ """
-        print("enter, `QUIT` to exit the app and see your list")
-        print("enter, `HELP` to see help")
-
-    @staticmethod
-    def sort_product_ascending():
-        """ """
+    @classmethod
+    def sort_asc(cls):
+        """
+        Sort products ascending
+        """
         products: list[str] = Product.read_products()
         sorted_products: list[Product] = sorted(products)
-        Product.show(sorted_products)
+        cls.show(sorted_products)
 
-    @staticmethod
-    def sort_product_descending():
-        """ """
+    @classmethod
+    def sort_dec():
+        """Sort products descending"""
         products: list[str] = Product.read_products()
         sorted_products: list[Product] = sorted(products, reverse=True)
         Product.show(sorted_products)
 
+    @staticmethod
+    def show(products: list[str]):
+        """
+        Get list of products and print them in a table like format.
 
-class User:
-    """ """
+        Parameters
+        ----------
+        products: list[str]
+            list of products each product is a string.
+        """
+        print(f"{'Product Name':20}{'Quantity':10}Price\tTotal Price")
+        print("-" * 50)
+        number = 0
+        for product in products:
+            name, number, price, total_price = product.split(",")
+            print(f"{name:20}{number:10}${price}\t${total_price}")
+            number += int(number)
+        print(f"All items number are: {number}")
 
     @staticmethod
-    def read_config():
+    def manual():
+        """
+        Display help on how to use the program
+        """
+        return """
+        Copy right by Zahra Mohammadzadeh
+        Last Edit: 2023/1/26
+        An application to manage an inventory of the shop.
+        Features:
+        - User authorization.
+        - Opetions like add, remove, search and show products.
+        Press `q` or `exit` to exit out of the program.
+        """
+
+
+@dataclass
+class User:
+    """
+    Authorized user management
+    """
+
+    username: str
+    password: str
+
+    def read_config(self):
         """ """
         with open("config.toml", "rb") as toml_file:
             config = tomllib.load(toml_file)
         return config
 
-    @staticmethod
-    def check_passwd(
-        admin_username, admin_password, username: str, password: str
-    ) -> bool:
+    def admin_credentials(self) -> Tuple[str, str]:
         """
-
-        Parameters
-        ----------
-        admin_username :
-
-        admin_password :
-
-        username: str :
-
-        password: str :
-
+        Extract admin username and admin password
 
         Returns
         -------
-
+        outs: str, str
+            Return admin username and password.
         """
-        if username == admin_username and password == admin_password:
+        config = self.read_config()
+        username = config.get("username")
+        passwd = config.get("password")
+        return username, passwd
+
+    def check_passwd(self) -> bool:
+        """
+        Compare username and password with the admin credentials
+
+        Retruns:
+        --------
+        outs: bool
+            True if user reponse credentials was correct otherwise False
+        """
+        admin_username, admin_passwd = self.admin_credentials()
+
+        if self.username == admin_username and self.password == admin_passwd:
             return True
         return False
 
-    @staticmethod
-    def authorization() -> bool:
-        """ """
-        config = User.read_config()
-        admin_username = config["username"]
-        admin_password = config["password"]
-        for i in range(3):
-            username = input("Username: ")
-            password = input("Password: ")
-            if User.check_passwd(admin_username, admin_password, username, password):
+    def authorization(self) -> bool:
+        """
+        Authorize user for 3 times
+
+        Returns
+        -------
+        outs: bool
+            Return True if user credentials was correct otherwiese False
+        """
+        for _ in range(3):
+            if self.check_passwd():
                 return True
             return False
 
 
 class Ui:
-    """ """
+    """
+    User interfece that user will interact.
+    """
 
     @staticmethod
     def clear_screen():
-        """ """
-        return os.system("cls")
+        """Clear console screen."""
+        os.system("cls")
 
     @staticmethod
     def show_logo():
-        """
-
-        Parameters
-        ----------
-
-        Returns
-        -------
-        type
+        return """
             *******************
             ** SHOPPING_LIST **
             *******************
-
         """
 
     @staticmethod
@@ -418,4 +402,5 @@ def main():
         print("Username or password is incorrect.")
 
 
-main()
+if __name__ == "__main__":
+    main()
