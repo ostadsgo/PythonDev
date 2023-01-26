@@ -200,42 +200,46 @@ class Product:
         Returns
         -------
         outs: str
-            Return the product if found otherwise return empty seting
+            Return the product if found otherwise return `Not found`
         """
-        if self.is_exist() != -1:
-            return f"{self.name},{self.number},{self.price},{self.total_price}"
-        return ""
+        products: list[str] = self.productfile.read()
+        index = self.is_exist()
+        if index == -1:
+            return "Not found"
+        return products[index]
 
     @classmethod
     def sort_asc(cls):
         """
         Sort products ascending
         """
-        products: list[str] = Product.read_products()
+        file = ProductFile(filename=cls.FILENAME)
+        products: list[str] = file.read()
         sorted_products: list[Product] = sorted(products)
-        cls.show(sorted_products)
+        cls.display(sorted_products)
 
     @classmethod
     def sort_dec(cls):
         """Sort products descending"""
-        products: list[str] = Product.read_products()
+        file = ProductFile(filename=cls.FILENAME)
+        products: list[str] = file.read()
         sorted_products: list[Product] = sorted(products, reverse=True)
-        cls.show(sorted_products)
+        cls.display(sorted_products)
 
     @classmethod
     def show(cls):
+        """Show all products."""
+        file = ProductFile(cls.FILENAME)
+        products = file.read()
+        cls.display(products)
+
+    @staticmethod
+    def display(products: list[str]):
         """
         Get list of products and print them in a table like format.
-
-        Parameters
-        ----------
-        products: list[str]
-            list of products each product is a string.
         """
-        file = ProductFile(filename=cls.FILENAME)
         print(f"{'Product Name':20}{'Quantity':10}Price\tTotal Price")
         print("-" * 50)
-        products = file.read()
         prod_total_num = 0
         for product in products:
             name, number, price, total_price = product.split(",")
@@ -309,20 +313,6 @@ class User:
         if self.username == admin_username and self.password == admin_passwd:
             return True
         return False
-
-    def authorization(self) -> bool:
-        """
-        Authorize user for 3 times
-
-        Returns
-        -------
-        outs: bool
-            Return True if user credentials was correct otherwiese False
-        """
-        for _ in range(3):
-            if self.check_passwd():
-                return True
-            return False
 
 
 class Ui:
@@ -408,7 +398,8 @@ class Ui:
             elif response == Menu.SEARCH.value:
                 name = input("Enter product name to search:").lower()
                 product = Product(name=name)
-                product.search()
+                res = product.search()
+                print(res)
             elif response == Menu.CLEAR.value:
                 Ui.clear_screen()
             elif response == Menu.SORT_ASC.value:
