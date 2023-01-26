@@ -84,7 +84,7 @@ class ProductFile:
             logging.error(str(e))
         return False
 
-    def read(self):
+    def read(self) -> list[str]:
         """
         Read content of the filename and return them as list of text
 
@@ -93,14 +93,17 @@ class ProductFile:
         out: bool
             Return list of string if able to read filename's content otherwise return empty list
         """
+        # default content
+        content = []
         try:
             with open(self.filename) as file:
                 content: list[str] = file.read().strip().split("\n")
-                return content
         except FileNotFoundError:
-            logging.error("The file inventory.txt is not exit")
-            logging.error("Create inventory.txt for the first time.")
-            self.write([""])
+            logging.error("inventory.txt is not exist.")
+        except Exception as e:
+            print(f"Wired exceptions happend! {e}")
+
+        return content
 
 
 @dataclass
@@ -239,14 +242,19 @@ class Product:
         """
         Get list of products and print them in a table like format.
         """
-        print(f"{'Product Name':20}{'Quantity':10}Price\tTotal Price")
-        print("-" * 50)
+        header = f"{'Product Name':20}{'Quantity':10}Price\tTotal Price"
+        dashes = "-" * len(header)
+        print(f"{header}\n{dashes}")
         prod_total_num = 0
         for product in products:
-            name, number, price, total_price = product.split(",")
-            print(f"{name:20}{number:10}${price}\t${total_price}")
-            prod_total_num += int(number)
-        print(f"Total number of products: {prod_total_num}")
+            # if product was true value
+            if product:
+                name, number, price, total_price = product.split(",")
+                print(f"{name:20}{number:10}${price}\t${total_price}")
+                prod_total_num += int(number)
+                print(f"Total number of products: {prod_total_num}")
+            else:
+                print("No Products. or wrong product format.")
 
     @staticmethod
     def manual():
@@ -382,7 +390,7 @@ class Ui:
         name = input("Product name: ").lower()
         product = Product(name=name)
         if product.remove():
-            print(f"{product} deleted successfully.")
+            print(f"{product.name} deleted successfully.")
 
     @staticmethod
     def search_ui():
@@ -400,7 +408,7 @@ class Ui:
 
     @staticmethod
     def help_ui():
-        Product.manual()
+        print(Product.manual())
 
     @staticmethod
     def sort_asc_ui():
