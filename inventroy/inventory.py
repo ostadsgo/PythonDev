@@ -110,12 +110,15 @@ class Product:
     Name of the product to create a product is required.
     """
 
+    # default filename to store products
+    FILENAME = "inventory.txt"
+
     def __init__(self, name: str, number=0, price=0):
         self.name = name
         self.number = number
         self.price = price
         self.total_price = self.number * self.price
-        self.productfile = ProductFile("inventory.txt")
+        self.productfile = ProductFile(self.FILENAME)
 
     def calc_total_price(self) -> int:
         """
@@ -200,7 +203,7 @@ class Product:
             Return the product if found otherwise return empty seting
         """
         if self.is_exist() != -1:
-            return f"{self.name} {self.number} {self.price} {self.total_price}"
+            return f"{self.name},{self.number},{self.price},{self.total_price}"
         return ""
 
     @classmethod
@@ -213,14 +216,14 @@ class Product:
         cls.show(sorted_products)
 
     @classmethod
-    def sort_dec():
+    def sort_dec(cls):
         """Sort products descending"""
         products: list[str] = Product.read_products()
         sorted_products: list[Product] = sorted(products, reverse=True)
-        Product.show(sorted_products)
+        cls.show(sorted_products)
 
-    @staticmethod
-    def show(products: list[str]):
+    @classmethod
+    def show(cls):
         """
         Get list of products and print them in a table like format.
 
@@ -229,14 +232,16 @@ class Product:
         products: list[str]
             list of products each product is a string.
         """
+        file = ProductFile(filename=cls.FILENAME)
         print(f"{'Product Name':20}{'Quantity':10}Price\tTotal Price")
         print("-" * 50)
-        number = 0
+        products = file.read()
+        prod_total_num = 0
         for product in products:
             name, number, price, total_price = product.split(",")
             print(f"{name:20}{number:10}${price}\t${total_price}")
-            number += int(number)
-        print(f"All items number are: {number}")
+            prod_total_num += int(number)
+        print(f"Total number of products: {prod_total_num}")
 
     @staticmethod
     def manual():
@@ -268,6 +273,13 @@ class User:
         with open("config.toml", "rb") as toml_file:
             config = tomllib.load(toml_file)
         return config
+
+    @staticmethod
+    def input_credentials() -> Tuple[str, str]:
+        """Ask user to give username and password."""
+        username = input("Username: ")
+        password = input("Password: ")
+        return username, password
 
     def admin_credentials(self) -> Tuple[str, str]:
         """
@@ -324,7 +336,8 @@ class Ui:
         os.system("cls")
 
     @staticmethod
-    def show_logo():
+    def show_logo() -> str:
+        """Simple text to repersent logo of the app."""
         return """
             *******************
             ** SHOPPING_LIST **
@@ -333,7 +346,12 @@ class Ui:
 
     @staticmethod
     def show_menu():
-        """ """
+        """Iterate over Menu enum and create menu items.
+        Returns:
+        --------
+        outs:
+
+        """
         print("Menu items: ")
         print("-" * 30)
         items = ""
@@ -342,20 +360,31 @@ class Ui:
         return items
 
     @staticmethod
-    def add_product_ui():
-        """ """
+    def add_ui() -> Product | None:
+        """
+        Get product info from user.
+
+        Returns:
+        --------
+        Outs: Product or None
+            Return a product if user response was correct otherwise None
+        """
         try:
             name = input("Enter product name:").lower()
-            item_number = int(input("Enter item number: "))
+            number = int(input("Enter number of the products: "))
             price = int(input("Enter price of the product: "))
-            return name, item_number, price
+            product = Product(name, number, price)
+            return product
         except ValueError:
             print("Error, please enter a valid number.")
-            logging.error("wrong value for item_number.")
+            logging.error("wrong value for product number.")
+        except Exception as e:
+            print(e)
+            logging.info(str(e))
 
     @classmethod
     def menu(cls):
-        """ """
+        """Display menu and get user response and act based on."""
         while True:
             cls.clear_screen()
             print(cls.show_logo())
@@ -363,43 +392,45 @@ class Ui:
             response = input("> ")
 
             if response in ["q", "exit", "quit"]:
-                break
-
-            elif response == Menu.add.value:
-                name, item_number, price = Ui.add_product_ui()
-                p = Product(name=name, number=item_number, price=price)
-                p.add_product()
-            elif response == Menu.show.value:
-                Product.show_products()
-            elif response == Menu.help.value:
-                Product.show_help()
-            elif response == Menu.remove.value:
-                name = input("Enter product name to remove:")
-                p = Product(name=name)
-                p.remove_product()
-            elif response == Menu.search.value:
+                print("Goodbye")
+                exit()
+            elif response == Menu.ADD.value:
+                product = Ui.add_ui()
+                product.add()
+            elif response == Menu.SHOW.value:
+                Product.show()
+            elif response == Menu.HELP.value:
+                print(Product.manual())
+            elif response == Menu.REMOVE.value:
+                name = input("Enter product name to remove:").lower()
+                product = Product(name=name)
+                product.remove()
+            elif response == Menu.SEARCH.value:
                 name = input("Enter product name to search:").lower()
-                p = Product(name=name)
-                p.search_product()
-            elif response == Menu.clear.value:
+                product = Product(name=name)
+                product.search()
+            elif response == Menu.CLEAR.value:
                 Ui.clear_screen()
-            elif response == Menu.sort_asc.value:
-                Product.sort_product_ascending()
-            elif response == Menu.sort_dec.value:
-                Product.sort_product_descending()
+            elif response == Menu.SORT_ASC.value:
+                Product.sort_asc()
+            elif response == Menu.SORT_DEC.value:
+                Product.sort_dec()
             else:
                 print("Wrong choice!!")
-                logging.info("user chooses wrong option", response)
+                logging.debug("user chooses wrong option", response)
 
             input("\nPress Enter key to continue ....")
 
 
 def main():
-    """ """
-    if User.authorization():
-        Ui.menu()
-    else:
-        print("Username or password is incorrect.")
+    """Main function to run the program."""
+    for _ in range(3):
+        username, password = User.input_credentials()
+        user = User(username, password)
+        if user.check_passwd():
+            Ui.menu()
+        else:
+            print("Username or password is incorrect.")
 
 
 if __name__ == "__main__":
