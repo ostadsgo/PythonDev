@@ -8,7 +8,7 @@ Contact = contact.Contact
 
 
 def message(result):
-    messages: dict[str, str] = {
+    messages {
         "succ": "Operation was successful.",
         "err": "Some error happend.",
         "nf": "Contact not found.",
@@ -19,7 +19,7 @@ def message(result):
 
 
 def menu():
-    items: list[str] = [
+    items = [
         "Add Contact",
         "Update Contact",
         "Delete Contact",
@@ -34,9 +34,9 @@ def menu():
 
 
 def add_contact_ui(contacts):
-    first: str = input("First Name: ")
-    last: str = input("Last Name: ")
-    phone: str = input("Phone Number: ")
+    first = input("First Name: ")
+    last = input("Last Name: ")
+    phone = input("Phone Number: ")
     result: bool = contact.add(contacts, [first, last, phone])
     msg: str = message(result)
     print(msg)
