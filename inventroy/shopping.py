@@ -5,41 +5,152 @@ from enum import Enum
 from dataclasses import dataclass
 
 
-class Menu(Enum):
-    """ """
+# basic config for log file.
+logging.basicConfig(filename="inventory.log", encoding="utf-8", level=logging.DEBUG)
 
-    add = "add"
-    show = "show"
-    help = "help"
-    remove = "remove"
-    search = "search"
-    clear = "clear"
-    sort_asc = "sort asc"
-    sort_dec = "sort dec"
+
+class Menu(Enum):
+    """
+    Menu options
+    """
+
+    ADD = "add"
+    SHOW = "show"
+    HELP = "help"
+    REMOVE = "remove"
+    SEARCH = "search"
+    CLEAR = "clear"
+    SORT_ASC = "sort asc"
+    SORT_DEC = "sort dec"
+
+
+@dataclass
+class ProductFile:
+    """
+    File operations for Product class
+    filename must be provided to create a file.
+    """
+
+    filename: str
+
+    def append(self, line: str) -> bool:
+        """
+        recive a line of text and append it to the end of the file.
+
+        Parameters
+        ----------
+        line: str
+            text to write to the file.
+
+        Returns
+        -------
+        out: bool
+            Return True if write operation was successful otherwise False
+
+        """
+        try:
+            with open(self.filename, "a") as file:
+                file.write(line)
+                return True
+        except FileExistsError as e:
+            logging.error(str(e))
+        except Exception as e:
+            logging.error(str(e))
+        return False
+
+    def write(self, lines: list[str]):
+        """
+        Iterate over line of text and write them to the file.
+
+        Parameters
+        ----------
+        lines: list[str]
+            List of lines each line is just a normal text
+
+        Returns
+        -------
+        out: bool
+            Return True if write operation was successful otherwise False
+        """
+        try:
+            with open(self.filename, "w") as file:
+                file.write(lines)
+                return True
+        except FileExistsError as e:
+            logging.error(str(e))
+        except Exception as e:
+            logging.error(str(e))
+        return False
+
+    def read(self):
+        """
+        Read content of the filename and return them as list of text
+
+        Returns
+        -------
+        out: bool
+            Return list of string if able to read filename's content otherwise return empty list
+        """
+        try:
+            with open(self.filename) as file:
+                content: list[str] = file.read().strip().split("\n")
+                return content
+        except FileNotFoundError:
+            print("The file inventory.txt is not exit")
+            self.write([""])
 
 
 @dataclass
 class Product:
-    """ """
+    """
+    Represent a product.
+    A product consist of name, number and price
+    Name of the product to create a product is required.
+    """
 
+    # Default filename to store all products.
     FILENAME = "inventory.txt"
 
-    def __init__(self, name: str, item_number=0, price=0):
+    def __init__(self, name: str, number=0, price=0):
         self.name = name
-        self.item_number = item_number
+        self.number = number
         self.price = price
-        self.total_price = self.item_number * self.price
+        self.total_price = self.number * self.price
 
     def get_total_price(self) -> int:
-        """ """
-        self.total_price = self.price * self.item_number
+        """
+        Calculate total price of the product
+
+        Returns
+        -------
+        out: int
+            Return totoal price of the product.
+        """
+        self.total_price = self.price * self.number
         return self.total_price
 
-    def append_product(self):
-        """ """
-        with open(self.FILENAME, "a") as file:
-            row = f"{self.name},{self.item_number},{self.price},{self.get_total_price()}\n"
-            file.write(row)
+    def save(self) -> bool:
+        """
+        Save the product in the file. Take log if there was exceptions.
+
+        Returns
+        -------
+        out: bool
+            Return True if product save successfully otherwise False.
+
+        """
+        try:
+            with open(self.FILENAME, "a") as file:
+                row = (
+                    f"{self.name},{self.number},{self.price},{self.get_total_price()}\n"
+                )
+                file.write(row)
+                return True
+        except FileExistsError as e:
+            logging.error(str(e))
+        except Exception as e:
+            logging.error(str(e))
+        return False
 
     @staticmethod
     def write_products(products: list[str]):
@@ -87,7 +198,7 @@ class Product:
             print("Product is already exists.")
             return None
 
-        self.append_product()
+        self.save()
 
     @staticmethod
     def show(products: list[str]):
@@ -272,7 +383,7 @@ class Ui:
 
             elif response == Menu.add.value:
                 name, item_number, price = Ui.add_product_ui()
-                p = Product(name=name, item_number=item_number, price=price)
+                p = Product(name=name, number=item_number, price=price)
                 p.add_product()
             elif response == Menu.show.value:
                 Product.show_products()
