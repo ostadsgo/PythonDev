@@ -49,13 +49,13 @@ class Customer:
 
 
 class Product:
-    def __init__(self, title, price):
-        self.title = title
+    def __init__(self, name, price):
+        self.name = name
         self.price = price
         self.product_file = FileOperation("products.txt")
 
     def save(self):
-        if self.product_file.write(f"{self.title}:{self.price}"):
+        if self.product_file.write(f"{self.name}:{self.price}"):
             return True
         return False
 
@@ -65,23 +65,26 @@ class Product:
 
     def display(self):
         products = self.all_products()
-        print(products)
-        for product in products:
-            print(product, end="")
+        for index, product in enumerate(products, 1):
+            print(f"{index}. {product.strip()}")
+
+    def make_product(self, text):
+        name, price = text.strip().split(":")
+        return Product(name, int(price))
 
     def __str__(self):
-        return f"{self.title}, ${self.price}"
+        return f"{self.name}, ${self.price}"
 
 
 class Invoice:
     def __init__(self, customer):
         self.customer = customer
         self.line_items = []
-        self.invoice_filename = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.invoice_filename = datetime.now().strftime("%Y-%m-%d %H:%M:%S") + '.txt'
 
     def add_line_item(self, product, quntity):
         item_total = product.price * quntity
-        line_item = [product.title, product.price, product.quntity, item_total]
+        line_item = [product.name, product.price, quntity, item_total]
         self.line_items.append(line_item)
 
     def save(self):
@@ -135,8 +138,25 @@ def run():
             p = Product("", 0)
             p.display()
         elif choice == "5":
-            # create an invoice
-            pass
+            p = Product("", 0)
+            customer_name = input("Enter customer name: ")
+            c = Customer(customer_name)
+            c.save()
+            invoice = Invoice(c)
+
+            products = p.all_products()
+            q = "y"
+            while q == "y":
+                p.display()
+                line_item_index = input("Choose line item: ")
+                line_item_text = products[int(line_item_index) - 1]
+                quntity = int(input("Enter quntity of the product: "))
+                line_item = p.make_product(line_item_text)
+                invoice.add_line_item(line_item, quntity)
+                q = input("Do you want add more line item? (y/n)").lower()
+            # save invoice after getting line items
+            invoice.save()
+
         elif choice == "6":
             running = False
         else:

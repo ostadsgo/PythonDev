@@ -1,6 +1,3 @@
-Hamberger:3
-
-Capochino:9
-
-Lazaniya:99
-
+Hamberger:9
+Cappoccino:8
+Coffe:4
