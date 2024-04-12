@@ -13,36 +13,37 @@ class QuizFrame(ttk.Frame):
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
         self.question_index = 0
-        self.score_board = []
         self.user_choice = tk.IntVar()
+        self.score_status = []
+        self.user_choices = []
+        self.question_number = len(questions.all_questions)
 
         self.question_lable = ttk.Label(self)
         self.opt_frame = ttk.Frame(self)
         self.next_button = ttk.Button(self, text="Next")
-        self.prev_button = ttk.Button(self, text="Prev")
+        # self.prev_button = ttk.Button(self, text="Prev")
+
         self.next_button.grid(row=5, column=1, sticky="e")
-        self.prev_button.grid(row=5, column=0, sticky="w")
-        
-        self.opt_frame.grid(row=1, column=0)
+        # self.prev_button.grid(row=5, column=0, sticky="w")
+        self.opt_frame.grid(row=1, column=0, stick="we")
 
         self.next_button.config(command=self.next_question)
         # self.prev_button.config(command=self.prev_question)
         # self.check_prev()
 
-    def check_prev(self):
-        """hide prev button if question_index is 1
-        in this case there is no previous question."""
-
-        if self.question_index <= 0:
-            self.prev_button.grid_forget()
-        else:
-            self.prev_button.grid(row=5, column=0, sticky="w")
+    # def check_prev(self):
+    #     """hide prev button if question_index is 1
+    #     in this case there is no previous question."""
+    #     if self.question_index <= 0:
+    #         self.prev_button.grid_forget()
+    #     else:
+    #         self.prev_button.grid(row=5, column=0, sticky="w")
 
     def get_quiz(self):
+        """Get a question text and it options the return"""
         quiz = questions.all_questions[self.question_index]
         question = quiz.get("question")
         options = quiz.get("options")
-
         return question, options
 
     def create_question(self, text):
@@ -54,62 +55,67 @@ class QuizFrame(ttk.Frame):
     def create_options(self, options):
         for row_index, option in enumerate(options, 1):
             ttk.Radiobutton(
-                self.opt_frame, text=option, value=row_index, variable=self.user_choice
+                self.opt_frame,
+                text=option,
+                value=row_index,
+                variable=self.user_choice,
+                command=self.check_answer,
             ).grid(row=row_index, column=0, sticky="w")
 
     def check_answer(self):
         user_answer = self.user_choice.get()
-        correct_answer = questions.all_questions[self.question_index].get("answer")
+        correct_answer = questions.all_questions[self.question_index - 1].get("answer")
+        print(user_answer, correct_answer)
         if user_answer == correct_answer:
-            self.score_board.append(f"question {self.question_index}: correct")
+            self.score_status.append(True)
         else:
-            self.score_board.append(f"question {self.question_index}: incorrect")
-
-        # Rest radio button
-        self.user_choice.set(0)
+            self.score_status.append(False)
 
     # Next question
     def next_question(self):
-        self.check_prev()
-        question, options = self.get_quiz()
+        if self.question_index < self.question_number:
+            # self.check_prev()
+            question, options = self.get_quiz()
+            self.user_choices.append(self.user_choice)
+            self.user_choice.set(0)
 
-        # create question and options
-        self.create_question(question)
-        self.create_options(options)
-        self.check_answer()
+            # create question and options
+            self.create_question(question)
+            self.create_options(options)
+            self.question_index += 1
 
-        # if reach last question.
-        if self.question_index == len(questions.all_questions) - 1:
-            self.next_button.config(text="Show result", command=self.show_result)
-            return
-
-        self.question_index += 1
+        elif self.question_index == self.question_number:
+            self.next_button["text"] = "Show Result"
+            print(self.show_result())
 
     # Previous question function
-    def prev_question(self):
-        self.check_prev()
-        self.question_index -= 1
-        question, options = self.get_quiz()
-
-        # question text
-        self.question_label = ttk.Label(
-            self, text=question, font=("Noto Sans", 16, "normal")
-        ).grid(row=0, column=0)
-
-        # question options
-        opt_frame = ttk.Frame(self)
-        opt_frame.grid(row=1, column=0, stick="wsen")
-        for opt in options:
-            ttk.Radiobutton(opt_frame, text=opt).pack(fill="both", expand=True)
+    # def prev_question(self):
+    #     self.question_index -= 1
+    #     question, options = self.get_quiz()
+    #
+    #     # create question and options
+    #     self.create_question(question)
+    #     self.create_options(options)
+    #
+    #
+    #     self.check_prev()
 
     def show_result(self):
-        print(self.score_board)
+        for child in self.winfo_children():
+            child.grid_forget()
+
+        result = "\n".join(
+                f"{i}: {ans}" for i, ans in enumerate(self.score_status, 1)
+        )
+        result_label = ttk.Label(self, text=result, font=("Noto Sans", 16, "normal"))
+        result_label.grid(row=0, column=0, stick="w")
 
 
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Quiz App")
+        self.geometry("400x400")
         quiz = QuizFrame(self)
         quiz.pack(expand=True, fill="both")
         quiz.next_question()
