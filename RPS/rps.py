@@ -2,7 +2,7 @@ import random
 import os
 
 
-def messages(winner):
+def messages(winner: str):
     msg = {
         "Rock": "Rock crushes scissors",
         "Paper": "Paper covers rock",
